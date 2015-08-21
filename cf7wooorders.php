@@ -5,10 +5,44 @@ Plugin URI: http://wpboxr.com/product/contact-form-7-woocommerce-orders
 Description: Woocommerce Customer Orders Dropdown Selector
 Author: WPBoxr
 Author URI: http://wpboxr.com
-Version: 1.0.0
+Version: 1.0.2
+*/
+
+register_activation_hook(__FILE__, 'wpcf7_wooorders_activation');
+
+function wpcf7_wooorders_activation(){
+    /**
+     * Check if WooCommerce & Cubepoints are active
+     **/
+    if ( !in_array( 'contact-form-7/wp-contact-form-7.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) )) {
+
+        // Deactivate the plugin
+        deactivate_plugins(__FILE__);
+
+        // Throw an error in the wordpress admin console
+        $error_message = __('This plugin requires <a target="_blank" href="https://wordpress.org/plugins/contact-form-7/">Contact Form 7</a> plugin to be active!', 'contactform7wooorders');
+        die($error_message);
+
+    }
+}
+
+/*
+function wpcf7_wooorders_detect_plugin_deactivation( $plugin, $network_activation ) {
+    //var_dump($plugin); exit();
+
+    if ($plugin == 'contact-form-7/wp-contact-form-7.php'){
+        //$dependent =  array('contact-form-7-wooorders/cf7wooorders.php');
+
+        //deactivate_plugins($dependent, false);
+        deactivate_plugins(__FILE__);
+    }
+}
+
+add_action( 'deactivated_plugin', 'wpcf7_wooorders_detect_plugin_deactivation', 10, 2 );
 */
 
 add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), 'wpboxr_cf7wooorders' );
+
 function wpboxr_cf7wooorders( $links ) {
 	$links[] = '<a href="http://wpboxr.com/product/contact-form-7-woocommerce-orders" target="_blank">WPBoxr</a>';
 	return $links;
@@ -19,7 +53,7 @@ function wpboxr_cf7wooorders( $links ) {
 add_action( 'wpcf7_init', 'wpcf7_add_shortcode_wooorders' );
 
 function wpcf7_add_shortcode_wooorders() {
-	//wpcf7_add_shortcode( array( 'wooorders','wooorders*' ),	'wpcf7_wooorders_shortcode_handler', true );
+
 	wpcf7_add_shortcode( array( 'wooorders' ),	'wpcf7_wooorders_shortcode_handler', true );
 }
 
@@ -72,7 +106,7 @@ function wpcf7_wooorders_shortcode_handler( $tag ) {
 		$item_count = $order->get_item_count();
 
 		$labels[] = '#'.$order->get_order_number().'( Status: '.wc_get_order_status_name( $order->get_status()) .')';
-		$values[] = '#'.$order->get_order_number();
+		$values[] = ''.$order->get_order_number();
 	}
 
 
@@ -196,9 +230,10 @@ function wpcf7_wooorders_validation_filter( $result, $tag ) {
 add_action( 'admin_init', 'wpcf7_add_tag_generator_wooorders', 25 );
 
 function wpcf7_add_tag_generator_wooorders() {
+    if(!class_exists('WPCF7_TagGenerator')) return;
+
 	$tag_generator = WPCF7_TagGenerator::get_instance();
-	$tag_generator->add( 'wooorders', __( 'WooCommerce Order Dropdown', 'contact-form-7' ),
-		'wpcf7_tag_generator_wooorders' );
+	$tag_generator->add( 'wooorders', __( 'WooCommerce Order Dropdown', 'contact-form-7' ), 'wpcf7_tag_generator_wooorders' );
 }
 
 function wpcf7_tag_generator_wooorders( $contact_form, $args = '' ) {
@@ -271,3 +306,4 @@ function wpcf7_tag_generator_wooorders( $contact_form, $args = '' ) {
 	</div>
 <?php
 }
+
